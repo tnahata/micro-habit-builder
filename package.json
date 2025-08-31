@@ -1,0 +1,26 @@
+{
+  "name": "micro-habit-builder",
+  "version": "1.0.0",
+  "description": "StreakFlow micro habit streak building app",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tnahata/micro-habit-builder.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/tnahata/micro-habit-builder/issues"
+  },
+  "homepage": "https://github.com/tnahata/micro-habit-builder#readme",
+  "dependencies": {
+    "next": "^15.5.2",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  }
+}
