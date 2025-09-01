@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { checkAuth } from "@/lib/auth";
 
-export default function OnboardingPage() {
+export default function OnboardingPage() { // TOOD: this should not be needed anymore
   const router = useRouter();
 
   useEffect(() => {

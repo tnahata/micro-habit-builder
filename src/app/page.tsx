@@ -11,7 +11,7 @@ export default function Home() {
           With StreakFlow, you get reminders where you want them, and we celebrate your wins with you!
         </p>
         <div className="flex gap-4 justify-center">
-          <Button href="/onboarding "size="lg" className="bg-blue-600 hover:bg-blue-700 text-white">
+          <Button href="/login" size="lg" className="bg-blue-600 hover:bg-blue-700 text-white">
             Get Started
           </Button>
           <Button size="lg" variant="outline">
