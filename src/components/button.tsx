@@ -1,17 +1,32 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 import { ButtonHTMLAttributes } from "react";
+import { useRouter } from "next/navigation";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "default" | "outline";
   size?: "sm" | "md" | "lg";
+  href?: string;
 }
 
 export function Button({
   className,
   variant = "default",
   size = "md",
+  onClick,
   ...props
 }: ButtonProps) {
+  const router = useRouter();
+
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    if (onClick) {
+      onClick(e);
+    }
+    if (props.href) {
+      router.push(props.href);
+    }
+  };
   const baseStyles =
     "rounded-2xl font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2";
 
@@ -30,6 +45,7 @@ export function Button({
   return (
     <button
       className={cn(baseStyles, variants[variant], sizes[size], className)}
+      onClick={handleClick}
       {...props}
     />
   );

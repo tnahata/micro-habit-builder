@@ -8,11 +8,10 @@ export default function Home() {
           Build Habits. Track Streaks. Stay Motivated.
         </h1>
         <p className="text-lg text-gray-600 mb-8">
-          StreakFlow helps you create micro-habits, track your progress across
-          Google Calendar, Notion, or Slack, and rewards you for consistency.
+          With StreakFlow, you get reminders where you want them, and we celebrate your wins with you!
         </p>
         <div className="flex gap-4 justify-center">
-          <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white">
+          <Button href="/onboarding "size="lg" className="bg-blue-600 hover:bg-blue-700 text-white">
             Get Started
           </Button>
           <Button size="lg" variant="outline">
