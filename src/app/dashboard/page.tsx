@@ -80,7 +80,7 @@ export default function Dashboard() {
     return <p>Loading...</p>;
   }
 
-  if(isAuthenticated){
+  if (isAuthenticated) {
     return (
       <div className="p-4">
         <h2 className="text-xl font-bold mb-4">Connected Apps</h2>
@@ -101,6 +101,7 @@ export default function Dashboard() {
       </div>
     );
   }
+  
   return (
     <>
       <p>You are not logged in</p>

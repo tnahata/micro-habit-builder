@@ -10,7 +10,10 @@
   },
   "dependencies": {
     "@descope/nextjs-sdk": "^0.14.15",
+    "@descope/node-sdk": "^1.7.13",
     "@descope/react-sdk": "^2.19.1",
+    "firebase": "^12.2.1",
+    "firebase-admin": "^13.5.0",
     "next": "15.5.2",
     "react": "19.1.0",
     "react-dom": "19.1.0"

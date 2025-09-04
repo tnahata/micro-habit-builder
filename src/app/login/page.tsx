@@ -11,8 +11,25 @@ export default function AuthPage() {
       <Descope
         flowId="sign-up-or-in"   // Descope default flow
         projectId={process.env.NEXT_PUBLIC_DESCOPE_PROJECT_ID!}
-        onSuccess={() => {
-          router.push("/dashboard");
+        onSuccess={async (e: { detail: { sessionJwt: string; refreshJwt: string } }) => {
+          const { sessionJwt, refreshJwt } = e.detail;
+
+          console.log("Login successful:", e.detail);
+
+          try {
+            // Send sessionJwt manually in dev; prod will ignore it and use cookies
+            await fetch("/api/auth/callback", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ sessionJwt }),
+            });
+            console.log("Auth callback completed, redirecting to dashboard...");
+            router.push("/dashboard");
+          } catch (error) {
+            console.error("Error in auth callback:", error);
+          }
         }}
       />
     </div>
