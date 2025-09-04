@@ -27,7 +27,7 @@ function IntegrationCard({ app, providerId, connected, onConnect }: {
 }
 
 export default function Dashboard() {
-  const { isSessionLoading } = useSession();
+  const { isAuthenticated,isSessionLoading } = useSession();
   const { isUserLoading, user } = useUser();
   const { outbound } = useDescope();
 
@@ -80,23 +80,31 @@ export default function Dashboard() {
     return <p>Loading...</p>;
   }
 
-  return (
-    <div className="p-4">
-      <h2 className="text-xl font-bold mb-4">Connected Apps</h2>
-      <div className="space-y-4">
-        <IntegrationCard
-          app="Google Calendar"
-          providerId="google-calendar"
-          connected={connectedApps['google-calendar'] || false}
-          onConnect={handleConnect}
-        />
-        <IntegrationCard
-          app="Slack"
-          providerId="slack"
-          connected={connectedApps['slack'] || false}
-          onConnect={handleConnect}
-        />
+  if(isAuthenticated){
+    return (
+      <div className="p-4">
+        <h2 className="text-xl font-bold mb-4">Connected Apps</h2>
+        <div className="space-y-4">
+          <IntegrationCard
+            app="Google Calendar"
+            providerId="google-calendar"
+            connected={connectedApps['google-calendar'] || false}
+            onConnect={handleConnect}
+          />
+          <IntegrationCard
+            app="Slack"
+            providerId="slack"
+            connected={connectedApps['slack'] || false}
+            onConnect={handleConnect}
+          />
+        </div>
       </div>
-    </div>
+    );
+  }
+  return (
+    <>
+      <p>You are not logged in</p>
+    </>
   );
 }
+
