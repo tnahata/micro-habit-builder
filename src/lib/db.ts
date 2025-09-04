@@ -56,12 +56,16 @@ export async function upsertUser(userId: string, data: any) {
 }
 
 // Add a new habit
-export async function addHabit(userId: string, habit: any) {
-  const habitsRef = collection(db, "users", userId, "habits");
-  return await addDoc(habitsRef, {
-    ...habit,
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
+export async function addHabits(userId: string, userHabits: [string]) {
+  const userRef = adminDb.collection("users").doc(userId);
+  
+  // Use a transaction to safely update the habits array
+  await adminDb.runTransaction(async (transaction) => {
+    const userDoc = await transaction.get(userRef);
+    if (!userDoc.exists) {
+      throw new Error("User does not exist");
+    }
+    transaction.update(userRef, { habits: userHabits, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
   });
 }
 

@@ -52,6 +52,7 @@ export async function POST(req: Request) {
       name,
       streaks: { current: 0, longest: 0 },
       rewards: { points: 0, badges: [] },
+      habits: [] as string[], // Define habits as an array of strings
       integrations: {
         googleCalendar: { connected: false },
         slack: { connected: false },
