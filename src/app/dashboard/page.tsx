@@ -1,29 +1,15 @@
+// app/dashboard/page.tsx
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useDescope, useSession, useUser } from '@descope/nextjs-sdk/client';
 
-// ✅ Call our backend API instead of placeholder
 async function fetchConnectedApps(sessionToken: string): Promise<Record<string, boolean>> {
-  try {
-    const response = await fetch("/api/connected-apps", {
-      headers: {
-        Authorization: `Bearer ${sessionToken}`,
-      },    
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch connected apps: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (err) {
-    console.error("Error fetching connected apps:", err);
-    return {
-      "google-calendar": false,
-      "slack": false,
-    };
-  }
+  console.log("Fetching connected apps...");
+  return {
+    'google-calendar': false, // Initial state, will be updated by the backend
+    'slack': false,
+  };
 }
 
 function IntegrationCard({ app, providerId, connected, onConnect }: {
@@ -58,7 +44,7 @@ export default function Dashboard() {
 
   const handleConnect = useCallback(async (providerId: string) => {
     try {
-      const response = await outbound.connect(providerId, { redirectUrl: "http://localhost:3000/dashboard" });
+      const response = await outbound.connect(providerId,{redirectUrl:"http://localhost:3000/dashboard"});
 
       console.log("Outbound connect response:", response);
 
