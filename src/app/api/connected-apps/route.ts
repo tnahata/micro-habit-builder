@@ -3,9 +3,10 @@ import { NextRequest } from "next/server";
 
 
 const DESCOPE_PROJECT_ID = process.env.NEXT_PUBLIC_DESCOPE_PROJECT_ID!;
-const MANAGEMENT_KEY = process.env.DESCOPE_MANAGEMENT_KEY!;
+const MANAGEMENT_KEY = process.env.NEXT_PUBLIC_DESCOPE_MANAGEMENT_KEY!;
 
 export async function POST(req: NextRequest) {
+  console.log("Received request to /api/integrations");
   try {
     const { userId } = await req.json();
     if (!userId) {
