@@ -1,7 +1,5 @@
 'use client';
- 
-import { useCallback } from 'react';
-import { useDescope, useSession, useUser } from '@descope/nextjs-sdk/client';
+import { useSession, useUser } from '@descope/nextjs-sdk/client';
 
 function IntegrationCard({ app, connected }: { app: string; connected: boolean }) {
   return (

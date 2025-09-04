@@ -40,3 +40,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vscode/
+
+# Ignore Firebase service account key
+streakflow-ac191-firebase-adminsdk-fbsvc-f89969519a.json
