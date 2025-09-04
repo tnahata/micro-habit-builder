@@ -1,16 +1,7 @@
-// app/dashboard/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useDescope, useSession, useUser } from '@descope/nextjs-sdk/client';
-
-async function fetchConnectedApps(sessionToken: string): Promise<Record<string, boolean>> {
-  console.log("Fetching connected apps...");
-  return {
-    'google-calendar': false, // Initial state, will be updated by the backend
-    'slack': false,
-  };
-}
 
 function IntegrationCard({ app, providerId, connected, onConnect }: {
   app: string;
@@ -36,19 +27,45 @@ function IntegrationCard({ app, providerId, connected, onConnect }: {
 }
 
 export default function Dashboard() {
-  const { isAuthenticated, isSessionLoading, sessionToken } = useSession();
-  const { isUserLoading } = useUser();
+  const { isSessionLoading } = useSession();
+  const { isUserLoading, user } = useUser();
   const { outbound } = useDescope();
 
   const [connectedApps, setConnectedApps] = useState<Record<string, boolean>>({});
 
-  const handleConnect = useCallback(async (providerId: string) => {
+  useEffect(() => {
+    const fetchConnectedApps = async () => {
+      if (!user?.userId) return;
+
+      try {
+        const res = await fetch("/api/connected-apps", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user.userId }),
+        });
+
+        if (!res.ok) {
+          console.error("Failed to fetch connected apps");
+          return;
+        }
+
+        const data = await res.json();
+        console.log("Connected apps:", data);
+        setConnectedApps(data);
+      } catch (err) {
+        console.error("Error fetching connected apps:", err);
+      }
+    };
+
+    fetchConnectedApps();
+  }, [user?.userId]);
+
+  const handleConnect = async (providerId: string) => {
     try {
-      const response = await outbound.connect(providerId,{redirectUrl:"http://localhost:3000/dashboard"});
+      const response = await outbound.connect(providerId, {
+        redirectUrl: "http://localhost:3000/dashboard",
+      });
 
-      console.log("Outbound connect response:", response);
-
-      // ✅ Redirect user to provider auth page if URL exists
       if (response?.data?.url) {
         window.location.href = response.data.url;
       } else {
@@ -57,41 +74,29 @@ export default function Dashboard() {
     } catch (error) {
       console.error("Connection failed:", error);
     }
-  }, [outbound]);
-
-  useEffect(() => {
-    if (isAuthenticated && sessionToken) {
-      fetchConnectedApps(sessionToken)
-        .then(setConnectedApps)
-        .catch(err => console.error('Failed to fetch connected apps:', err));
-    }
-  }, [isAuthenticated, sessionToken]);
+  };
 
   if (isSessionLoading || isUserLoading) {
     return <p>Loading...</p>;
   }
 
-  if (isAuthenticated) {
-    return (
-      <div className="p-4">
-        <h2 className="text-xl font-bold mb-4">Connected Apps</h2>
-        <div className="space-y-4">
-          <IntegrationCard
-            app="Google Calendar"
-            providerId="google-calendar"
-            connected={connectedApps['google-calendar'] || false}
-            onConnect={handleConnect}
-          />
-          <IntegrationCard
-            app="Slack"
-            providerId="slack"
-            connected={connectedApps['slack'] || false}
-            onConnect={handleConnect}
-          />
-        </div>
+  return (
+    <div className="p-4">
+      <h2 className="text-xl font-bold mb-4">Connected Apps</h2>
+      <div className="space-y-4">
+        <IntegrationCard
+          app="Google Calendar"
+          providerId="google-calendar"
+          connected={connectedApps['google-calendar'] || false}
+          onConnect={handleConnect}
+        />
+        <IntegrationCard
+          app="Slack"
+          providerId="slack"
+          connected={connectedApps['slack'] || false}
+          onConnect={handleConnect}
+        />
       </div>
-    );
-  }
-
-  return <p>You are not logged in</p>;
+    </div>
+  );
 }
