@@ -25,8 +25,8 @@ export default function AuthPage() {
               },
               body: JSON.stringify({ sessionJwt }),
             });
-            console.log("Auth callback completed, redirecting to dashboard...");
-            router.push("/dashboard");
+            console.log("Auth callback completed, redirecting to onboarding...");
+            router.push("/onboarding");
           } catch (error) {
             console.error("Error in auth callback:", error);
           }
