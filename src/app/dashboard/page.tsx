@@ -98,7 +98,7 @@ export default function Dashboard() {
           <IntegrationCard
             app="Google Calendar"
             providerId="google-calendar"
-            connected={connectedApps['google-calendar'] || false}
+            connected={connectedApps['googleCalendar'] || false}
             onConnect={handleConnect}
           />
           <IntegrationCard

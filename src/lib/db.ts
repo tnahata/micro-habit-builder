@@ -55,6 +55,29 @@ export async function upsertUser(userId: string, data: any) {
   await userRef.set(payload, { merge: true });
 }
 
+export async function updateIntegrationStatus(
+  userId: string,
+  integration: "googleCalendar" | "slack",
+  status: boolean
+) {
+  const userRef = adminDb.collection("users").doc(userId);
+
+  await adminDb.runTransaction(async (transaction) => {
+    const userDoc = await transaction.get(userRef);
+    if (!userDoc.exists) {
+      throw new Error("User does not exist");
+    }
+
+    // Build the dynamic field path, e.g. "integrations.slack.connected"
+    const fieldPath = `integrations.${integration}.connected`;
+
+    transaction.update(userRef, {
+      [fieldPath]: status,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  });
+}
+
 // Add a new habit
 export async function addHabits(userId: string, userHabits: string[]) {
   const userRef = adminDb.collection("users").doc(userId);
