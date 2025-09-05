@@ -56,7 +56,7 @@ export async function upsertUser(userId: string, data: any) {
 }
 
 // Add a new habit
-export async function addHabits(userId: string, userHabits: [string]) {
+export async function addHabits(userId: string, userHabits: string[]) {
   const userRef = adminDb.collection("users").doc(userId);
   
   // Use a transaction to safely update the habits array
@@ -70,10 +70,18 @@ export async function addHabits(userId: string, userHabits: [string]) {
 }
 
 // Get all habits for a user
-export async function getHabits(userId: string) {
-  const habitsRef = collection(db, "users", userId, "habits");
-  const snap = await getDocs(habitsRef);
-  return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+export async function getHabits(userId: string): Promise<string[]> {
+  const userRef = adminDb.collection("users").doc(userId);
+  const userDoc = await userRef.get();
+  if (!userDoc.exists) {
+    throw new Error("User does not exist");
+  }
+  const data = userDoc.data();
+  if (!data) {
+    return [];
+  }
+  // habits is stored as an array in your doc
+  return Array.isArray(data.habits) ? (data.habits as string[]) : [];
 }
 
 // Log a habit completion

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useDescope, useSession, useUser } from '@descope/nextjs-sdk/client';
+import { useRouter } from 'next/navigation';
 
 function IntegrationCard({ app, providerId, connected, onConnect }: {
   app: string;
@@ -30,6 +31,7 @@ export default function Dashboard() {
   const { isAuthenticated,isSessionLoading } = useSession();
   const { isUserLoading, user } = useUser();
   const { outbound } = useDescope();
+  const router = useRouter();
 
   const [connectedApps, setConnectedApps] = useState<Record<string, boolean>>({});
 
@@ -83,7 +85,15 @@ export default function Dashboard() {
   if (isAuthenticated) {
     return (
       <div className="p-4">
-        <h2 className="text-xl font-bold mb-4">Connected Apps</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">Connected Apps</h2>
+          <button
+            onClick={() => router.push('/onboarding')}
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+          >
+            + Add Habits
+          </button>
+        </div>
         <div className="space-y-4">
           <IntegrationCard
             app="Google Calendar"
@@ -108,4 +118,3 @@ export default function Dashboard() {
     </>
   );
 }
-
