@@ -65,7 +65,7 @@ export default function Dashboard() {
   const handleConnect = async (providerId: string) => {
     try {
       const response = await outbound.connect(providerId, {
-        redirectUrl: "http://localhost:3000/dashboard",
+        redirectUrl: process.env.NEXT_PUBLIC_BASE_URL + "/dashboard",
       });
 
       if (response?.data?.url) {

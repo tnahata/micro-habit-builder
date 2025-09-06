@@ -8,7 +8,7 @@ const descope = DescopeClient({
 
 const sdk = createSdk({
   projectId: process.env.NEXT_PUBLIC_DESCOPE_PROJECT_ID!,
-  managementKey: process.env.NEXT_PUBLIC_DESCOPE_MANAGEMENT_KEY!,
+  managementKey: process.env.DESCOPE_MANAGEMENT_KEY!,
 });
 
 export async function POST(req: Request) {

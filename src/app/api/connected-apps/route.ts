@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 import { updateIntegrationStatus } from "@/lib/db"; // 👈 import your Firestore helper
 
 const DESCOPE_PROJECT_ID = process.env.NEXT_PUBLIC_DESCOPE_PROJECT_ID!;
-const MANAGEMENT_KEY = process.env.NEXT_PUBLIC_DESCOPE_MANAGEMENT_KEY!;
+const MANAGEMENT_KEY = process.env.DESCOPE_MANAGEMENT_KEY!;
 
 export async function POST(req: NextRequest) {
   console.log("Received request to /api/integrations");
