@@ -42,10 +42,16 @@ export async function getUser(userId: string) {
   return snap.exists() ? snap.data() : null;
 }
 
-export async function upsertUser(userId: string, data: any) {
+interface UserPayload {
+  createdAt?: FirebaseFirestore.FieldValue;
+  updatedAt: FirebaseFirestore.FieldValue;
+  habits?: string[];
+}
+
+export async function upsertUser(userId: string, data: Record<string, unknown>) {
   const userRef = adminDb.collection("users").doc(userId);
   const docSnapshot = await userRef.get();
-  const payload: any = {
+  const payload: UserPayload = {
     ...data,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   };
