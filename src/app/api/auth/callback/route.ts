@@ -46,7 +46,6 @@ export async function POST(req: Request) {
 
     console.log("User email:", email);
     console.log("User name:", name);
-    console.log("User ID:", userId);
     const insertData = {
       email,
       name,

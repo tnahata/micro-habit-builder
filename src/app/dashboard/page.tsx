@@ -52,7 +52,6 @@ export default function Dashboard() {
         }
 
         const data = await res.json();
-        console.log("Connected apps:", data);
         setConnectedApps(data);
       } catch (err) {
         console.error("Error fetching connected apps:", err);
