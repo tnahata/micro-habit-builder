@@ -6,7 +6,7 @@ const DESCOPE_PROJECT_ID = process.env.NEXT_PUBLIC_DESCOPE_PROJECT_ID!;
 const MANAGEMENT_KEY = process.env.DESCOPE_MANAGEMENT_KEY!;
 
 export async function POST(req: NextRequest) {
-  console.log("Received request to /api/integrations");
+  console.log("Received request to /api/connected-apps");
   try {
     const { userId } = await req.json();
     if (!userId) {
