@@ -86,12 +86,20 @@ export default function Dashboard() {
       <div className="p-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Connected Apps</h2>
-          <button
-            onClick={() => router.push('/onboarding')}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
-          >
-            + Add Habits
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => router.push('/onboarding')}
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+            >
+              + Add Habits
+            </button>
+            <button
+              onClick={() => router.push('/login')}
+              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
+            >
+              Log Out
+            </button>
+          </div>
         </div>
         <div className="space-y-4">
           <IntegrationCard

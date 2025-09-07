@@ -9,6 +9,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const [habits, setHabits] = useState<string[]>([""]);
+  const [originalHabits, setOriginalHabits] = useState<string[]>([]); // ✅ store initial habits
   const [loading, setLoading] = useState(true);
 
   // ✅ Redirect if user not logged in
@@ -31,10 +32,11 @@ export default function OnboardingPage() {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data.habits) && data.habits.length > 0) {
-            // ✅ Always add one extra empty input for a new habit
             setHabits([...data.habits, ""]);
+            setOriginalHabits(data.habits); // ✅ save original (without empty input)
           } else {
-            setHabits([""]); // fallback: only one empty input
+            setHabits([""]);
+            setOriginalHabits([]);
           }
         }
       } catch (err) {
@@ -65,9 +67,22 @@ export default function OnboardingPage() {
 
   const handleSubmit = async () => {
     if (!user?.userId) return;
+
+    // ✅ Filter out any empty input fields
+    const filteredHabits = habits.filter((h) => h.trim() !== "");
+
+    // ✅ Compare with original habits
+    const unchanged =
+      filteredHabits.length === originalHabits.length &&
+      filteredHabits.every((h, i) => h === originalHabits[i]);
+
+    if (unchanged) {
+      console.log("No changes in habits, skipping DB update.");
+      router.push("/dashboard"); // just navigate
+      return;
+    }
+
     try {
-      // ✅ Filter out any empty input fields before saving
-      const filteredHabits = habits.filter((h) => h.trim() !== "");
       await fetch("/api/habits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -90,6 +105,12 @@ export default function OnboardingPage() {
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-6">
+      <button
+        onClick={() => router.push("/dashboard")}
+        className="absolute top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition shadow-md"
+      >
+        Go to Dashboard
+      </button>
       <h2 className="text-2xl font-bold mb-4">Welcome to StreakFlow 🎉</h2>
       <p className="text-gray-600 mb-6">
         Let&apos;s set up your reminder preferences.

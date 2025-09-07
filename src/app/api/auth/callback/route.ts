@@ -26,7 +26,6 @@ export async function POST(req: Request) {
       }
       currSession = await descope.validateSession(body.sessionJwt);
     }
-
     // 3️⃣ Extract userId from session token
     const userId = currSession.token.sub; // "sub" is the unique user ID
     if (!userId) {
