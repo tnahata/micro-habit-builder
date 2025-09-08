@@ -9,35 +9,37 @@ export default function OnboardingPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const [habits, setHabits] = useState<string[]>([""]);
-  const [originalHabits, setOriginalHabits] = useState<string[]>([]); // ✅ store initial habits
+  const [originalHabits, setOriginalHabits] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Redirect if user not logged in
   useEffect(() => {
     if (!user && !isUserLoading) {
       router.push("/auth/callback");
     }
   }, [user, isUserLoading, router]);
 
-  // ✅ Load habits when user is available
   useEffect(() => {
     const loadHabits = async () => {
       if (!user?.userId) return;
       try {
         const res = await fetch("/api/habits", {
-          method: "PUT", // using PUT for loading
+          method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId: user.userId }),
         });
+
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data.habits) && data.habits.length > 0) {
-            setHabits([...data.habits, ""]);
-            setOriginalHabits(data.habits); // ✅ save original (without empty input)
-          } else {
-            setHabits([""]);
-            setOriginalHabits([]);
-          }
+          const names = Array.isArray(data.habits)
+            ? data.habits
+                .map((h: any) => (typeof h === "string" ? h : h?.name))
+                .filter((n: any) => typeof n === "string" && n.trim() !== "")
+            : [];
+          setHabits([...names, ""]);
+          setOriginalHabits(names);
+        } else {
+          setHabits([""]);
+          setOriginalHabits([]);
         }
       } catch (err) {
         console.error("Failed to load habits:", err);
@@ -49,36 +51,30 @@ export default function OnboardingPage() {
     loadHabits();
   }, [user?.userId]);
 
-  // ✅ Handlers
   const handleHabitChange = (index: number, value: string) => {
-    const newHabits = [...habits];
-    newHabits[index] = value;
-    setHabits(newHabits);
+    const next = [...habits];
+    next[index] = value;
+    setHabits(next);
   };
 
-  const addHabit = () => {
-    setHabits([...habits, ""]);
-  };
+  const addHabit = () => setHabits((prev) => [...prev, ""]);
 
   const removeHabit = (index: number) => {
-    const newHabits = habits.filter((_, i) => i !== index);
-    setHabits(newHabits.length > 0 ? newHabits : [""]);
+    const next = habits.filter((_, i) => i !== index);
+    setHabits(next.length > 0 ? next : [""]);
   };
 
   const handleSubmit = async () => {
     if (!user?.userId) return;
 
-    // ✅ Filter out any empty input fields
-    const filteredHabits = habits.filter((h) => h.trim() !== "");
+    const filtered = habits.map((h) => h.trim()).filter((h) => h !== "");
 
-    // ✅ Compare with original habits
     const unchanged =
-      filteredHabits.length === originalHabits.length &&
-      filteredHabits.every((h, i) => h === originalHabits[i]);
+      filtered.length === originalHabits.length &&
+      filtered.every((h, i) => h === originalHabits[i]);
 
     if (unchanged) {
-      console.log("No changes in habits, skipping DB update.");
-      router.push("/dashboard"); // just navigate
+      router.push("/dashboard");
       return;
     }
 
@@ -86,7 +82,7 @@ export default function OnboardingPage() {
       await fetch("/api/habits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.userId, habits: filteredHabits }),
+        body: JSON.stringify({ userId: user.userId, habits: filtered }), // send string[]
       });
       router.push("/dashboard");
     } catch (err) {
@@ -94,7 +90,6 @@ export default function OnboardingPage() {
     }
   };
 
-  // ✅ UI
   if (loading) {
     return (
       <main className="flex items-center justify-center min-h-screen">
@@ -111,10 +106,9 @@ export default function OnboardingPage() {
       >
         Go to Dashboard
       </button>
+
       <h2 className="text-2xl font-bold mb-4">Welcome to StreakFlow 🎉</h2>
-      <p className="text-gray-600 mb-6">
-        Let&apos;s set up your reminder preferences.
-      </p>
+      <p className="text-gray-400 mb-6">Let&apos;s set up your reminder preferences.</p>
 
       <div className="w-full max-w-md space-y-3">
         {habits.map((habit, index) => (
@@ -124,11 +118,11 @@ export default function OnboardingPage() {
               value={habit}
               onChange={(e) => handleHabitChange(index, e.target.value)}
               placeholder={`Habit ${index + 1}`}
-              className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 p-2 border rounded-lg bg-black text-white border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <button
               onClick={() => removeHabit(index)}
-              className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+              className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
             >
               -
             </button>

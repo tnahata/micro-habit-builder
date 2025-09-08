@@ -5,19 +5,13 @@ import {
   collection,
   doc,
   getDoc,
-  getDocs,
   setDoc,
-  addDoc,
   updateDoc,
-  query,
-  where,
   Timestamp,
-  serverTimestamp,
 } from "firebase/firestore";
 import { adminDb } from "./firebaseAdmin";
 import * as admin from "firebase-admin";
 
-// ✅ Firebase config from your .env.local (make sure to set NEXT_PUBLIC_ vars)
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
@@ -27,21 +21,17 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
 };
 
-// Avoid re-initialization in Next.js (Hot Reload friendly)
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const db = getFirestore(app);
 
-//
-// 🔹 Query Helpers
-//
-
-// Get a user profile by ID
+// Get user data
 export async function getUser(userId: string) {
   const userRef = doc(db, "users", userId);
   const snap = await getDoc(userRef);
   return snap.exists() ? snap.data() : null;
 }
 
+// Upsert user
 export async function upsertUser(userId: string, data: any) {
   const userRef = adminDb.collection("users").doc(userId);
   const docSnapshot = await userRef.get();
@@ -51,11 +41,12 @@ export async function upsertUser(userId: string, data: any) {
   };
   if (!docSnapshot.exists) {
     payload.createdAt = admin.firestore.FieldValue.serverTimestamp();
-    payload.habits = [] as string[]; // Define habits as an array of strings
+    payload.habits = [];
   }
   await userRef.set(payload, { merge: true });
 }
 
+// Update integration
 export async function updateIntegrationStatus(
   userId: string,
   integration: "googleCalendar" | "slack",
@@ -68,10 +59,7 @@ export async function updateIntegrationStatus(
     if (!userDoc.exists) {
       throw new Error("User does not exist");
     }
-
-    // Build the dynamic field path, e.g. "integrations.slack.connected"
     const fieldPath = `integrations.${integration}.connected`;
-
     transaction.update(userRef, {
       [fieldPath]: status,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -79,55 +67,102 @@ export async function updateIntegrationStatus(
   });
 }
 
-// Add a new habit
+// Add habits
 export async function addHabits(userId: string, userHabits: string[]) {
   const userRef = adminDb.collection("users").doc(userId);
-  
-  // Use a transaction to safely update the habits array
+
   await adminDb.runTransaction(async (transaction) => {
     const userDoc = await transaction.get(userRef);
     if (!userDoc.exists) {
       throw new Error("User does not exist");
     }
-    transaction.update(userRef, { habits: userHabits, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+
+    const now = admin.firestore.Timestamp.now();
+    const normalizedHabits = userHabits.map((name) => ({
+      id: String(name).toLowerCase().trim().replace(/\s+/g, "-"),
+      name: String(name),
+      streaks: { current: 0, longest: 0 },
+      logs: [] as { completed: boolean; date: admin.firestore.Timestamp }[],
+      createdAt: now,
+      updatedAt: now,
+    }));
+
+    transaction.update(userRef, {
+      habits: normalizedHabits,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
   });
 }
 
-// Get all habits for a user
-export async function getHabits(userId: string): Promise<string[]> {
+// Get habits
+export async function getHabits(userId: string): Promise<any[]> {
   const userRef = adminDb.collection("users").doc(userId);
   const userDoc = await userRef.get();
   if (!userDoc.exists) {
     throw new Error("User does not exist");
   }
   const data = userDoc.data();
-  if (!data) {
-    return [];
-  }
-  // habits is stored as an array in your doc
-  return Array.isArray(data.habits) ? (data.habits as string[]) : [];
+  return Array.isArray(data?.habits) ? data!.habits : [];
 }
 
-// Log a habit completion
-export async function logHabit(userId: string, habitId: string, completed: boolean) {
-  const logsRef = collection(db, "users", userId, "logs");
-  return await addDoc(logsRef, {
-    habitId,
-    completed,
-    date: Timestamp.now(),
+// Log habit (append log entry inside the habit)
+export async function logHabit(
+  userId: string,
+  habitId: string,
+  completed: boolean
+) {
+  const userRef = adminDb.collection("users").doc(userId);
+
+  await adminDb.runTransaction(async (transaction) => {
+    const userDoc = await transaction.get(userRef);
+    if (!userDoc.exists) throw new Error("User does not exist");
+
+    const data = userDoc.data();
+    const habits = data?.habits || [];
+
+    const updatedHabits = habits.map((habit: any) => {
+      if (habit.id === habitId) {
+        return {
+          ...habit,
+          logs: [
+            ...(habit.logs || []),
+            {
+              completed,
+              date: admin.firestore.Timestamp.now().toDate(),
+            },
+          ],
+          updatedAt: admin.firestore.Timestamp.now(),
+        };
+      }
+      return habit;
+    });
+
+    transaction.update(userRef, {
+      habits: updatedHabits,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
   });
 }
 
-// Get logs for a specific habit
-export async function getHabitLogs(userId: string, habitId: string) {
-  const logsRef = collection(db, "users", userId, "logs");
-  const q = query(logsRef, where("habitId", "==", habitId));
-  const snap = await getDocs(q);
-  return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+// Get logs for a habit
+export async function getHabitLogs(
+  userId: string,
+  habitId: string
+): Promise<{ completed: boolean; date: any }[]> {
+  const userRef = adminDb.collection("users").doc(userId);
+  const userDoc = await userRef.get();
+  if (!userDoc.exists) throw new Error("User does not exist");
+
+  const data = userDoc.data();
+  const habits = data?.habits || [];
+  const habit = habits.find((h: any) => h.id === habitId);
+
+  return habit ? habit.logs || [] : [];
 }
 
+// Get user integrations
 export async function getUserIntegrations(userId: string) {
   const userRef = doc(db, "users", userId);
   const snap = await getDoc(userRef);
-  return snap.exists() ? snap.data().integrations : null;
+  return snap.exists() ? (snap.data() as any).integrations : null;
 }
