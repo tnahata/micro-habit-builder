@@ -3,7 +3,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } fro
 export default function HabitBarChart({ data }: { data: any[] }) {
   return (
     <div className="bg-gray-800 p-6 rounded shadow-lg">
-      <h4 className="font-semibold text-lg mb-4">Current vs Longest Streaks (Bar Chart)</h4>
+      <h4 className="font-semibold text-lg mb-4">Current vs Longest Streaks</h4>
       <ResponsiveContainer width="100%" height={250}>
         <BarChart data={data}>
           <XAxis dataKey="name" stroke="#ccc" />

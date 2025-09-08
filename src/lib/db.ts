@@ -25,10 +25,15 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const db = getFirestore(app);
 
 // Get user data
-export async function getUser(userId: string) {
-  const userRef = doc(db, "users", userId);
-  const snap = await getDoc(userRef);
-  return snap.exists() ? snap.data() : null;
+export async function getUser(userId: string): Promise<any> {
+  const userRef = adminDb.collection("users").doc(userId);
+  const userDoc = await userRef.get();
+
+  if (!userDoc.exists) {
+    throw new Error("User does not exist");
+  }
+
+  return userDoc.data(); // full user object (habits, streaks, etc.)
 }
 
 // Upsert user

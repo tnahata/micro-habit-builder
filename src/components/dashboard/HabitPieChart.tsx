@@ -5,7 +5,7 @@ export default function HabitPieChart({ data }: { data: any[] }) {
 
   return (
     <div className="bg-gray-800 p-6 rounded shadow-lg">
-      <h4 className="font-semibold text-lg mb-4">Completion vs Missed (Pie Chart)</h4>
+      <h4 className="font-semibold text-lg mb-4">Completion vs Missed</h4>
       <ResponsiveContainer width="100%" height={250}>
         <PieChart>
           <Pie

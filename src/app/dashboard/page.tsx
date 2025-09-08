@@ -9,6 +9,7 @@ import HabitSelector from '@/components/dashboard/HabitSelector';
 import HabitBarChart from '@/components/dashboard/HabitBarChart';
 import HabitLineChart from '@/components/dashboard/HabitLineChart';
 import HabitPieChart from '@/components/dashboard/HabitPieChart';
+import StreakDonutChart from '@/components/dashboard/StreakDonutChart';
 
 export default function DashboardPage() {
   const { isAuthenticated, isSessionLoading } = useSession();
@@ -18,6 +19,7 @@ export default function DashboardPage() {
 
   const [connectedApps, setConnectedApps] = useState<Record<string, boolean>>({});
   const [habitsData, setHabitsData] = useState<any[]>([]);
+  const [userData, setUserData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedHabit, setSelectedHabit] = useState<any | null>(null);
 
@@ -56,6 +58,23 @@ export default function DashboardPage() {
         }
       } catch (err) {
         console.error(err);
+      }
+    };
+
+    const fetchUserData = async () => {
+      if (!user?.userId) return;
+      try {
+        const res = await fetch("/api/streaks", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user.userId }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUserData(data.user || null);
+        }
+      } catch (err) {
+        console.error("Error fetching userData:", err);
       } finally {
         setLoading(false);
       }
@@ -63,6 +82,7 @@ export default function DashboardPage() {
 
     fetchConnectedApps();
     fetchHabitsData();
+    fetchUserData();
   }, [user?.userId]);
 
   const handleConnect = async (providerId: string) => {
@@ -88,22 +108,33 @@ export default function DashboardPage() {
 
   // Data for charts
   const barChartData = selectedHabit
-    ? [{
-        name: selectedHabit.name,
-        current: selectedHabit.streaks?.current || 0,
-        longest: selectedHabit.streaks?.longest || 0,
-      }]
+    ? [
+        {
+          name: selectedHabit.name,
+          current: selectedHabit.streaks?.current || 0,
+          longest: selectedHabit.streaks?.longest || 0,
+        },
+      ]
     : [];
 
-  const lineChartData = selectedHabit?.logs?.map((log: any, idx: number) => ({
-    day: `Day ${idx + 1}`,
-    completed: log.completed ? 1 : 0,
-  })) || [];
+  const lineChartData =
+    selectedHabit?.logs?.map((log: any, idx: number) => ({
+      day: `Day ${idx + 1}`,
+      completed: log.completed ? 1 : 0,
+    })) || [];
 
   const pieChartData = selectedHabit
     ? [
-        { name: "Completed", value: selectedHabit.logs?.filter((l: any) => l.completed).length || 0 },
-        { name: "Missed", value: selectedHabit.logs?.filter((l: any) => !l.completed).length || 0 },
+        {
+          name: "Completed",
+          value:
+            selectedHabit.logs?.filter((l: any) => l.completed).length || 0,
+        },
+        {
+          name: "Missed",
+          value:
+            selectedHabit.logs?.filter((l: any) => !l.completed).length || 0,
+        },
       ]
     : [];
 
@@ -113,13 +144,13 @@ export default function DashboardPage() {
         <h2 className="text-3xl font-bold">Dashboard</h2>
         <div className="flex gap-3">
           <button
-            onClick={() => router.push('/onboarding')}
+            onClick={() => router.push("/onboarding")}
             className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
           >
             + Add Habits
           </button>
           <button
-            onClick={() => router.push('/login')}
+            onClick={() => router.push("/login")}
             className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
           >
             Log Out
@@ -132,13 +163,13 @@ export default function DashboardPage() {
         <IntegrationCard
           app="Google Calendar"
           providerId="google-calendar"
-          connected={connectedApps['googleCalendar'] || false}
+          connected={connectedApps["googleCalendar"] || false}
           onConnect={handleConnect}
         />
         <IntegrationCard
           app="Slack"
           providerId="slack"
-          connected={connectedApps['slack'] || false}
+          connected={connectedApps["slack"] || false}
           onConnect={handleConnect}
         />
       </div>
@@ -155,6 +186,12 @@ export default function DashboardPage() {
         <HabitBarChart data={barChartData} />
         <HabitLineChart data={lineChartData} />
         <HabitPieChart data={pieChartData} />
+      </div>
+      <div>
+        <StreakDonutChart
+          current={userData?.streaks?.current || 0}
+          longest={userData?.streaks?.longest || 0}
+        />
       </div>
     </div>
   );

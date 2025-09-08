@@ -3,7 +3,7 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend } f
 export default function HabitLineChart({ data }: { data: any[] }) {
   return (
     <div className="bg-gray-800 p-6 rounded shadow-lg">
-      <h4 className="font-semibold text-lg mb-4">Habit Progress (Line Chart)</h4>
+      <h4 className="font-semibold text-lg mb-4">Habit Progress</h4>
       <ResponsiveContainer width="100%" height={250}>
         <LineChart data={data}>
           <XAxis dataKey="day" stroke="#ccc" />
