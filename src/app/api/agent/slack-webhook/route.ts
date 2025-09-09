@@ -8,7 +8,27 @@ import { adminDb } from '@/lib/firebaseAdmin';
 
 export async function POST(request: NextRequest) {
   try {
-    const payload = await request.json();
+    const body = await request.text();
+    console.log('📨 Slack webhook - Raw body:', body);
+    
+    let payload;
+    
+    // Check if it's JSON or URL-encoded
+    if (body.startsWith('{')) {
+      // JSON payload
+      payload = JSON.parse(body);
+    } else {
+      // URL-encoded payload (interactive components)
+      const urlParams = new URLSearchParams(body);
+      const payloadParam = urlParams.get('payload');
+      if (payloadParam) {
+        payload = JSON.parse(payloadParam);
+      } else {
+        throw new Error('No payload found in URL-encoded data');
+      }
+    }
+    
+    console.log('📨 Slack webhook - Parsed payload:', JSON.stringify(payload, null, 2));
     
     // Handle Slack URL verification (first-time setup)
     if (payload.type === 'url_verification') {
