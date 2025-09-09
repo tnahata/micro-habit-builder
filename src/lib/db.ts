@@ -1,9 +1,5 @@
 // src/lib/db.ts
 
-import {
-  doc,
-  getDoc,
-} from "firebase/firestore";
 import { adminDb } from "./firebaseAdmin";
 import * as admin from "firebase-admin";
 
@@ -180,10 +176,4 @@ export async function getHabitLogs(
   const habit = habits.find((h: any) => h.id === habitId);
 
   return habit ? habit.logs || [] : [];
-}
-
-export async function getUserIntegrations(userId: string) {
-  const userRef = doc(db, "users", userId);
-  const snap = await getDoc(userRef);
-  return snap.exists() ? snap.data().integrations : null;
 }
