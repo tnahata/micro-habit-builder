@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StreakFlow: Micro Habit Builder
 
-## Getting Started
+StreakFlow is a habit tracking platform that helps users build micro-habits, track their streaks, and stay motivated with reminders and progress visualizations.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Team
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**Team Name:** StreakFlow  
+**Members:** Tanish Nahata, Mohak Nahata
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Hackathon Theme
 
-## Learn More
+**Theme:** Theme 1
 
-To learn more about Next.js, take a look at the following resources:
+**Challenge:** lack of a seamless way to track and maintain healthy habits, where users often lose consistency or motivation—this platform solves it by combining habit tracking, streak visualization, and productivity tool integrations (Google Calendar, Slack) to keep users accountable and engaged.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## What We Built
 
-## Deploy on Vercel
+StreakFlow enables users to:
+- Create and manage micro-habits
+- Track daily progress and streaks
+- Visualize habit data with charts
+- Connect with external apps (e.g., Slack) for reminders
+- Celebrate wins and maintain motivation
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### How to Run
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Deployed Platform Link:** [https://micro-habit-builder.vercel.app]
+
+---
+
+## Tech Stack
+
+- Next.js (React)
+- TypeScript
+- Tailwind CSS
+- Descope (Authentication & OAuth)
+- Slack API (Reminders integration)
+- Google-Calendar API (Reminders integration)
+- Chart.js (Data visualization)
+
+---
+
+## Demo Video
+
+[Watch the demo](https://your-demo-video-link.com)
+
+---
+
+## What Fixes are Needed
+
+- We weren't able to fully test the agent scheduling logic, weren't able to configure and deploy the CRON, and couldn't test the slack webhook either. We have the code in the repository but couldn't finish the setup and testing in time for the project deadline. After submission, our plan is to test and deploy that part of the application so it is useful.
+
+## What We'd Do With More Time
+
+- Add social features (friend streaks, group habits)
+- Expand integrations (Twilio, Discord)
+- Mobile app support
+- Advanced analytics and habit recommendations
+- Gamification
