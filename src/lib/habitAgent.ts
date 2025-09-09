@@ -130,7 +130,7 @@ export class TailoredHabitAgent {
 
   async getCalendarData(userId: string, userData: UserDocument): Promise<CalendarSlot[]> {
     try {
-      let accessToken = userData.integrations.googleCalendar.accessToken;
+      const accessToken = userData.integrations.googleCalendar.accessToken;
       const refreshToken = userData.integrations.googleCalendar.refreshToken;
 
       if (!accessToken) {
