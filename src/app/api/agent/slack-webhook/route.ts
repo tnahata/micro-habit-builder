@@ -77,8 +77,8 @@ async function handleHabitCompleted(payload: any, userId: string, habitName: str
   const points = userData?.rewards?.points || 0;
   
   // Get user's Slack access token
-  const userDoc = await adminDb.collection('users').doc(userId).get();
-  const userData = userDoc.data();
+  // const userDoc = await adminDb.collection('users').doc(userId).get();
+  // const userData = userDoc.data();
   const slackAccessToken = userData?.integrations?.slack?.accessToken;
   
   if (!slackAccessToken) {
