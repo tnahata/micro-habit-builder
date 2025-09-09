@@ -1,61 +1,41 @@
 // src/lib/db.ts
-import { initializeApp, getApps, getApp } from "firebase/app";
-import {
-  getFirestore,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-  addDoc,
-  updateDoc,
-  query,
-  where,
-  Timestamp,
-  serverTimestamp,
-} from "firebase/firestore";
+
 import { adminDb } from "./firebaseAdmin";
 import * as admin from "firebase-admin";
 
-// ✅ Firebase config from your .env.local (make sure to set NEXT_PUBLIC_ vars)
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
-};
+interface UserPayload {
+  createdAt?: FirebaseFirestore.FieldValue;
+  updatedAt: FirebaseFirestore.FieldValue;
+  habits?: string[];
+}
+// Get user data
+export async function getUser(userId: string): Promise<any> {
+  const userRef = adminDb.collection("users").doc(userId);
+  const userDoc = await userRef.get();
 
-// Avoid re-initialization in Next.js (Hot Reload friendly)
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-export const db = getFirestore(app);
+  if (!userDoc.exists) {
+    throw new Error("User does not exist");
+  }
 
-//
-// 🔹 Query Helpers
-//
-
-// Get a user profile by ID
-export async function getUser(userId: string) {
-  const userRef = doc(db, "users", userId);
-  const snap = await getDoc(userRef);
-  return snap.exists() ? snap.data() : null;
+  return userDoc.data(); // full user object (habits, streaks, etc.)
 }
 
+// Upsert user
 export async function upsertUser(userId: string, data: any) {
   const userRef = adminDb.collection("users").doc(userId);
   const docSnapshot = await userRef.get();
-  const payload: any = {
+  const payload: UserPayload = {
     ...data,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   };
   if (!docSnapshot.exists) {
     payload.createdAt = admin.firestore.FieldValue.serverTimestamp();
-    payload.habits = [] as string[]; // Define habits as an array of strings
+    payload.habits = [];
   }
   await userRef.set(payload, { merge: true });
 }
 
+// Update integration
 export async function updateIntegrationStatus(
   userId: string,
   integration: "googleCalendar" | "slack",
@@ -68,10 +48,7 @@ export async function updateIntegrationStatus(
     if (!userDoc.exists) {
       throw new Error("User does not exist");
     }
-
-    // Build the dynamic field path, e.g. "integrations.slack.connected"
     const fieldPath = `integrations.${integration}.connected`;
-
     transaction.update(userRef, {
       [fieldPath]: status,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -79,55 +56,135 @@ export async function updateIntegrationStatus(
   });
 }
 
-// Add a new habit
+// Add habits
 export async function addHabits(userId: string, userHabits: string[]) {
   const userRef = adminDb.collection("users").doc(userId);
-  
-  // Use a transaction to safely update the habits array
   await adminDb.runTransaction(async (transaction) => {
     const userDoc = await transaction.get(userRef);
     if (!userDoc.exists) {
       throw new Error("User does not exist");
     }
-    transaction.update(userRef, { habits: userHabits, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+    const now = admin.firestore.Timestamp.now();
+    const existingData = userDoc.data();
+    const existingHabits: any[] = existingData?.habits || [];
+    // Normalize input
+    const normalizedInput = userHabits.map((name) => ({
+      id: String(name).toLowerCase().trim().replace(/\s+/g, "-"),
+      name: String(name),
+    }));
+    // Preserve existing habits
+    const updatedHabits = [...existingHabits];
+    // Add only new habits
+    normalizedInput.forEach((habit) => {
+      const alreadyExists = existingHabits.some((h) => h.id === habit.id);
+      if (!alreadyExists) {
+        updatedHabits.push({
+          ...habit,
+          streaks: { current: 0, longest: 0 },
+          logs: [] as { completed: boolean; date: admin.firestore.Timestamp }[],
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    });
+    transaction.update(userRef, {
+      habits: updatedHabits,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
   });
 }
 
-// Get all habits for a user
-export async function getHabits(userId: string): Promise<string[]> {
+// Get habits
+export async function getHabits(userId: string): Promise<any[]> {
   const userRef = adminDb.collection("users").doc(userId);
   const userDoc = await userRef.get();
   if (!userDoc.exists) {
     throw new Error("User does not exist");
   }
   const data = userDoc.data();
-  if (!data) {
-    return [];
+  return Array.isArray(data?.habits) ? data!.habits : [];
+}
+// Store integration tokens
+export async function storeIntegrationTokens(
+  userId: string,
+  integration: "googleCalendar" | "slack",
+  accessToken: string,
+  refreshToken?: string,
+  additionalData?: Record<string, any>
+) {
+  const userRef = adminDb.collection("users").doc(userId);
+
+  const updateData: any = {
+    [`integrations.${integration}.accessToken`]: accessToken,
+    [`integrations.${integration}.connected`]: true,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
+
+  if (refreshToken) {
+    updateData[`integrations.${integration}.refreshToken`] = refreshToken;
   }
-  // habits is stored as an array in your doc
-  return Array.isArray(data.habits) ? (data.habits as string[]) : [];
+
+  // Add any additional data (like Slack user ID)
+  if (additionalData) {
+    Object.keys(additionalData).forEach(key => {
+      updateData[`integrations.${integration}.${key}`] = additionalData[key];
+    });
+  }
+
+  await userRef.update(updateData);
 }
 
-// Log a habit completion
-export async function logHabit(userId: string, habitId: string, completed: boolean) {
-  const logsRef = collection(db, "users", userId, "logs");
-  return await addDoc(logsRef, {
-    habitId,
-    completed,
-    date: Timestamp.now(),
+// Log habit (append log entry inside the habit)
+export async function logHabit(
+  userId: string,
+  habitId: string,
+  completed: boolean
+) {
+  const userRef = adminDb.collection("users").doc(userId);
+
+  await adminDb.runTransaction(async (transaction) => {
+    const userDoc = await transaction.get(userRef);
+    if (!userDoc.exists) throw new Error("User does not exist");
+
+    const data = userDoc.data();
+    const habits = data?.habits || [];
+
+    const updatedHabits = habits.map((habit: any) => {
+      if (habit.id === habitId) {
+        return {
+          ...habit,
+          logs: [
+            ...(habit.logs || []),
+            {
+              completed,
+              date: admin.firestore.Timestamp.now().toDate(),
+            },
+          ],
+          updatedAt: admin.firestore.Timestamp.now(),
+        };
+      }
+      return habit;
+    });
+
+    transaction.update(userRef, {
+      habits: updatedHabits,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
   });
 }
 
-// Get logs for a specific habit
-export async function getHabitLogs(userId: string, habitId: string) {
-  const logsRef = collection(db, "users", userId, "logs");
-  const q = query(logsRef, where("habitId", "==", habitId));
-  const snap = await getDocs(q);
-  return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-}
+// Get logs for a habit
+export async function getHabitLogs(
+  userId: string,
+  habitId: string
+): Promise<{ completed: boolean; date: any }[]> {
+  const userRef = adminDb.collection("users").doc(userId);
+  const userDoc = await userRef.get();
+  if (!userDoc.exists) throw new Error("User does not exist");
 
-export async function getUserIntegrations(userId: string) {
-  const userRef = doc(db, "users", userId);
-  const snap = await getDoc(userRef);
-  return snap.exists() ? snap.data().integrations : null;
+  const data = userDoc.data();
+  const habits = data?.habits || [];
+  const habit = habits.find((h: any) => h.id === habitId);
+
+  return habit ? habit.logs || [] : [];
 }

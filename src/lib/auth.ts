@@ -20,7 +20,7 @@ export async function getCurrentUser(req: NextRequest) {
 				email: "authInfo.user.email",
 			};
 		}
-	} catch (err: any) {
+  } catch (err: unknown) {
     // If session is expired, try refreshing with the refresh token
     if (refreshToken) {
       try {
@@ -43,7 +43,11 @@ export async function getCurrentUser(req: NextRequest) {
       }
     }
 
-    console.error("Session validation failed:", err);
+    if (err instanceof Error) {
+      console.error("Session validation failed:", err.message);
+    } else {
+      console.error("Session validation failed:", err);
+    }
     return null;
   }
 }  

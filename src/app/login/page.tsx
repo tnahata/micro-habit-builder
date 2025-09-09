@@ -14,8 +14,6 @@ export default function AuthPage() {
         onSuccess={async (e: { detail: { sessionJwt: string; refreshJwt: string } }) => {
           const { sessionJwt, refreshJwt } = e.detail;
 
-          console.log("Login successful:", e.detail);
-
           try {
             // Send sessionJwt manually in dev; prod will ignore it and use cookies
             await fetch("/api/auth/callback", {
