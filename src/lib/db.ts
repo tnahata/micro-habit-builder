@@ -104,7 +104,7 @@ export async function getHabits(userId: string): Promise<any[]> {
   const data = userDoc.data();
   return Array.isArray(data?.habits) ? data!.habits : [];
 }
- // Store integration tokens
+// Store integration tokens
 export async function storeIntegrationTokens(
   userId: string,
   integration: "googleCalendar" | "slack",
@@ -113,24 +113,24 @@ export async function storeIntegrationTokens(
   additionalData?: Record<string, any>
 ) {
   const userRef = adminDb.collection("users").doc(userId);
-  
+
   const updateData: any = {
     [`integrations.${integration}.accessToken`]: accessToken,
     [`integrations.${integration}.connected`]: true,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   };
-  
+
   if (refreshToken) {
     updateData[`integrations.${integration}.refreshToken`] = refreshToken;
   }
-  
+
   // Add any additional data (like Slack user ID)
   if (additionalData) {
     Object.keys(additionalData).forEach(key => {
       updateData[`integrations.${integration}.${key}`] = additionalData[key];
     });
   }
-  
+
   await userRef.update(updateData);
 }
 

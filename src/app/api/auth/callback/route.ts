@@ -1,6 +1,6 @@
 import { session, createSdk } from "@descope/nextjs-sdk/server";
 import DescopeClient from "@descope/node-sdk";
-import { upsertUser } from "@/lib/db";
+import { upsertUser, getUser } from "@/lib/db";
 
 const descope = DescopeClient({
   projectId: process.env.NEXT_PUBLIC_DESCOPE_PROJECT_ID!,
@@ -22,47 +22,62 @@ export async function POST(req: Request) {
     if (!currSession) {
       const body = await req.json();
       if (!body.sessionJwt) {
-        return new Response(JSON.stringify({ error: "No session token provided" }), { status: 401 });
+        return new Response(
+          JSON.stringify({ error: "No session token provided" }),
+          { status: 401 }
+        );
       }
       currSession = await descope.validateSession(body.sessionJwt);
     }
+
     // 3️⃣ Extract userId from session token
-    const userId = currSession.token.sub; // "sub" is the unique user ID
+    const userId = currSession.token.sub;
     if (!userId) {
-      return new Response(JSON.stringify({ error: "No valid user ID in session" }), { status: 400 });
+      return new Response(
+        JSON.stringify({ error: "No valid user ID in session" }),
+        { status: 400 }
+      );
     }
 
     const { ok, data: user } = await sdk.management.user.load(userId);
     if (!ok || !user) {
       return new Response("User not found", { status: 404 });
-    } else {
-      console.log("User found:", user);
     }
 
-    // 4️⃣ Fetch full user profile from Descope
+    // 4️⃣ Fetch user profile from Descope
     const email = user.email ?? "";
     const name = user.name ?? "";
 
-    console.log("User email:", email);
-    console.log("User name:", name);
+    // 🔑 5️⃣ Check Firestore for existing user
+    const existingUser = await getUser(userId);
+
     const insertData = {
       email,
       name,
-      streaks: { current: 0, longest: 0 },
-      rewards: { points: 0, badges: [] },
-      integrations: {
+      streaks: existingUser?.streaks ?? { current: 0, longest: 0 },
+      rewards: existingUser?.rewards ?? { points: 0, badges: [] },
+      integrations: existingUser?.integrations ?? {
         googleCalendar: { connected: false },
         slack: { connected: false },
       },
-    }
-    console.log("Insert data:", insertData);
-    // 5️⃣ Upsert user into Firestore / DB
+      habits: existingUser?.habits ?? [], // preserve habits
+    };
+
+    // 6️⃣ Upsert user into Firestore
     await upsertUser(userId, insertData);
 
-    // 6️⃣ Return success
-    return new Response(JSON.stringify({ success: true, user: { id: userId, email, name } }), { status: 200 });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        user: { id: userId, email, name },
+      }),
+      { status: 200 }
+    );
   } catch (err) {
     console.error("Auth callback error:", err);
-    return new Response(JSON.stringify({ error: "Authentication failed" }), { status: 500 });
+    return new Response(
+      JSON.stringify({ error: "Authentication failed" }),
+      { status: 500 }
+    );
   }
 }
