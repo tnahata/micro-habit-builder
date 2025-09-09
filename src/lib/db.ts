@@ -83,17 +83,34 @@ export async function addHabits(userId: string, userHabits: string[]) {
     }
 
     const now = admin.firestore.Timestamp.now();
-    const normalizedHabits = userHabits.map((name) => ({
+    const existingData = userDoc.data();
+    const existingHabits: any[] = existingData?.habits || [];
+
+    // Normalize input
+    const normalizedInput = userHabits.map((name) => ({
       id: String(name).toLowerCase().trim().replace(/\s+/g, "-"),
       name: String(name),
-      streaks: { current: 0, longest: 0 },
-      logs: [] as { completed: boolean; date: admin.firestore.Timestamp }[],
-      createdAt: now,
-      updatedAt: now,
     }));
 
+    // Preserve existing habits
+    const updatedHabits = [...existingHabits];
+
+    // Add only new habits
+    normalizedInput.forEach((habit) => {
+      const alreadyExists = existingHabits.some((h) => h.id === habit.id);
+      if (!alreadyExists) {
+        updatedHabits.push({
+          ...habit,
+          streaks: { current: 0, longest: 0 },
+          logs: [] as { completed: boolean; date: admin.firestore.Timestamp }[],
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    });
+
     transaction.update(userRef, {
-      habits: normalizedHabits,
+      habits: updatedHabits,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
   });
