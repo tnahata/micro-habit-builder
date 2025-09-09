@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
 
       // 👇 update Firestore with connection status AND store tokens
       await updateIntegrationStatus(userId, fieldName, isConnected);
-      
+
       // 🔑 Store the actual tokens in Firestore if connected
       if (isConnected && data?.token?.accessToken) {
         const userRef = adminDb.collection('users').doc(userId);
@@ -64,12 +64,15 @@ export async function POST(req: NextRequest) {
           [`integrations.${fieldName}.connected`]: true,
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
         };
-        
-        // Store refresh token if available
-        if (data.token.refreshToken) {
+
+        // Store refresh token if available (and not empty)
+        if (data.token.refreshToken && data.token.refreshToken.trim() !== '') {
           updateData[`integrations.${fieldName}.refreshToken`] = data.token.refreshToken;
+          console.log(`🔄 Stored refresh token for ${fieldName}`);
+        } else {
+          console.log(`⚠️ No refresh token available for ${fieldName}`);
         }
-        
+
         // For Slack, we need to get the Slack user ID from the token
         if (fieldName === 'slack' && data.token.accessToken) {
           try {
@@ -88,9 +91,15 @@ export async function POST(req: NextRequest) {
             console.error('Error getting Slack user ID:', slackError);
           }
         }
-        
-        await userRef.update(updateData);
-        console.log(`🔑 Stored ${fieldName} tokens for user: ${userId}`);
+
+        try {
+          await userRef.update(updateData);
+          console.log(`🔑 Successfully stored ${fieldName} tokens for user: ${userId}`);
+          console.log(`📊 Update data:`, JSON.stringify(updateData, null, 2));
+        } catch (firestoreError) {
+          console.error(`❌ Failed to store ${fieldName} tokens for user ${userId}:`, firestoreError);
+          throw firestoreError;
+        }
       }
     }
 
