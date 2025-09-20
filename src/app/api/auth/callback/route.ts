@@ -49,7 +49,12 @@ export async function POST(req: Request) {
     const name = user.name ?? "";
 
     // 🔑 5️⃣ Check Firestore for existing user
-    const existingUser = await getUser(userId);
+    let existingUser;
+    try {
+      existingUser = await getUser(userId);
+    } catch (error: Error | any) {
+      console.log("User does not exist, will create new user:", error.message);
+    }
 
     const insertData = {
       email,

@@ -1,7 +1,6 @@
 // src/app/api/auth/call/route.ts
 import { session } from "@descope/nextjs-sdk/server";
 
-// ✅ define it here
 export async function getUserSession() {
   try {
     const currSession = await session();
